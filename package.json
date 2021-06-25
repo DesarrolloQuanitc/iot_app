@@ -1,5 +1,5 @@
 {
-  "name": "app",
+  "name": "iot_gl_app",
   "version": "1.0.0",
   "description": "IOT_GL_APP",
   "author": "IoTicos.org",
@@ -21,7 +21,6 @@
     "core-js": "^3.7.0",
     "cors": "^2.8.5",
     "d3": "^5.7.0",
-    "dotenv": "^8.2.0",
     "element-ui": "^2.14.1",
     "es6-promise": "^4.1.1",
     "express": "^4.17.1",
