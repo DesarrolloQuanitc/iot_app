@@ -63,8 +63,11 @@
                     <el-table-column prop="templateName" label="Template"></el-table-column>
                     <el-table-column label="Actions">
                         <div slot-scope="{row,$index}">
+                            <el-tooltip content="Database-Indicator" style="margin-right:10px">
+                                <i class="fas fa-database" :class="{'text-success':row.saverRule==true,'text-dark':row.saverRule==false}"></i>
+                            </el-tooltip>
                             <el-tooltip content="Database-Server">
-                                <base-switch @click="UpdateServerRulesStatus($index)" :value="row.serverRules" type="primary" on-text="On" off-text="Off" ></base-switch>
+                                <base-switch @click="updateSaverRuleStatus($index)" :value="row.saverRule" type="primary" on-text="On" off-text="Off" ></base-switch>
                             </el-tooltip>
                             <el-tooltip content="Delete" effect="light" :open-delay="300" placement="top">
                             <base-button type="danger" icon size="sm" class="btn-link" @click="deleteDevice(row)">
