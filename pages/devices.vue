@@ -78,6 +78,9 @@
             </card>
         </div>
         
+        <Json :value="devices">
+
+        </Json>
 
 
     </div>
@@ -94,42 +97,42 @@ export default {
     [Option.name]: Option,
     [Select.name]: Select
   },
-  data(){
-      return{
-          devices:[
-              {
-                  name:"Home",
-                  dId:"123456",
-                  templateName:"Power Sensor",
-                  templateId:"987654321",
-                  serverRules:false
-              },
-               {
-                  name:"Office",
-                  dId:"123456",
-                  templateName:"Power Sensor",
-                  templateId:"987654321",
-                  serverRules:true
-              },
-               {
-                  name:"Farm",
-                  dId:"123456",
-                  templateName:"Power Sensor",
-                  templateId:"987654321",
-                  serverRules:false
-              }
-          ]
-      }
+  data() {
+    return {
+      devices: [
+        {
+          name: "Home",
+          dId: "8888",
+          templateName: "Power Sensor",
+          templateId: "984237562348756ldksjfh",
+          saverRule: false,
+          count: 100
+        },
+        {
+          name: "Office",
+          dId: "1111",
+          templateName: "Power Sensor",
+          templateId: "984237562348756ldksjfh",
+          saverRule: true
+        },
+        {
+          name: "Farm",
+          dId: "99999",
+          templateName: "Power Sensor",
+          templateId: "984237562348756ldksjfh",
+          saverRule: true
+        }
+      ]
+    };
   },
-  methods:{
-      deleteDevice(device){
-          alert("Borrando: "+ device.name);
-      },
-      UpdateServerRulesStatus(index){
-          this.devices[index].serverRules = ! this.devices[index].serverRules
-      }
+  methods: {
+    deleteDevice(device) {
+      alert("DELETING " + device.name);
+    },
+    updateSaverRuleStatus(index){
+        console.log(index)
+        this.devices[index].saverRule = !this.devices[index].saverRule;
+    }
   }
-  
 };
 </script>
-
