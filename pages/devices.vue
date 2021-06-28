@@ -63,6 +63,9 @@
                     <el-table-column prop="templateName" label="Template"></el-table-column>
                     <el-table-column label="Actions">
                         <div slot-scope="{row,$index}">
+                            <el-tooltip content="Database-Server">
+                                <base-switch @click="UpdateServerRulesStatus($index)" :value="row.serverRules" type="primary" on-text="On" off-text="Off" ></base-switch>
+                            </el-tooltip>
                             <el-tooltip content="Delete" effect="light" :open-delay="300" placement="top">
                             <base-button type="danger" icon size="sm" class="btn-link" @click="deleteDevice(row)">
                                 <i class="tim-icons icon-simple-remove"></i>
@@ -98,19 +101,22 @@ export default {
                   name:"Home",
                   dId:"123456",
                   templateName:"Power Sensor",
-                  templateId:"987654321"
+                  templateId:"987654321",
+                  serverRules:false
               },
                {
                   name:"Office",
                   dId:"123456",
                   templateName:"Power Sensor",
-                  templateId:"987654321"
+                  templateId:"987654321",
+                  serverRules:true
               },
                {
                   name:"Farm",
                   dId:"123456",
                   templateName:"Power Sensor",
-                  templateId:"987654321"
+                  templateId:"987654321",
+                  serverRules:false
               }
           ]
       }
@@ -118,6 +124,9 @@ export default {
   methods:{
       deleteDevice(device){
           alert("Borrando: "+ device.name);
+      },
+      UpdateServerRulesStatus(index){
+          this.devices[index].serverRules = ! this.devices[index].serverRules
       }
   }
   
