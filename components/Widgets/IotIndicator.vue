@@ -22,6 +22,9 @@ export default {
       value: false
     };
   },
+  beforeDestroy(){
+    this.$nuxt.$off(this.config.userId + "/" + this.config.selectedDevice.dId + "/" + this.config.variable + "/sdata")
+  },
   mounted(){
       //userId/dId/uniquestr/sdata
     const topic = this.config.userId + "/" + this.config.selectedDevice.dId + "/" + this.config.variable + "/sdata";
