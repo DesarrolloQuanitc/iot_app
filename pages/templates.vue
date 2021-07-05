@@ -1,27 +1,38 @@
 <template>
-    <div>
-        <IotIndicator></IotIndicator>
-        <button @click="sendData()">SEND</button>
-    </div>
+  <div class="row">
+    
+    <IotButton :config="configButton"></IotButton>
+
+  </div>
 </template>
 
 <script>
-    
-    export default {
-        data(){
-            return{
-                value:false
-            }
+export default {
+  data() {
+    return {
+      value: false,
+        configButton: {
+        userId: "userid",
+        selectedDevice: {
+          name: "Home",
+          dId: "8888",
+          templateName: "Power Sensor",
+          templateId: "984237562348756ldksjfh",
+          saverRule: false
         },
-        methods:{
-            sendData(){
-                this.value=!this.value
-                const toSend={
-                    value: this.value
-                }
-                this.$nuxt.$emit('widget-topic',toSend);
-            }
-        }
-    }
-
+        variableFullName: "Pump",
+        variable: "var1",
+        icon: "fa-sun",
+        column: "col-6",
+        widget: "indicator",
+        class: "success",
+        message:"{'fanstatus':'stop'}"
+      },
+     
+    };
+  },
+  methods: {
+    
+  }
+};
 </script>
