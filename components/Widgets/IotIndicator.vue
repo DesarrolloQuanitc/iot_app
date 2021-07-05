@@ -20,10 +20,8 @@ export default {
   data() {
     return {
       value: false
+
     };
-  },
-  beforeDestroy(){
-    this.$nuxt.$off(this.config.userId + "/" + this.config.selectedDevice.dId + "/" + this.config.variable + "/sdata")
   },
   mounted(){
       //userId/dId/uniquestr/sdata
@@ -31,7 +29,11 @@ export default {
     console.log(topic);
     this.$nuxt.$on(topic, this.processReceivedData)
   },
+  beforeDestroy(){
+    this.$nuxt.$off(this.config.userId + "/" + this.config.selectedDevice.dId + "/" + this.config.variable + "/sdata")
+  },
   methods: {
+
     processReceivedData(data){
         console.log("received");
         console.log(data);
@@ -42,6 +44,7 @@ export default {
       if (!this.value) {
         return "text-dark";
       }
+
       if (this.config.class == "success") {
         return "text-success";
       }
@@ -55,6 +58,9 @@ export default {
         return "text-danger";
       }
     }
+
   }
 };
+
+
 </script>
