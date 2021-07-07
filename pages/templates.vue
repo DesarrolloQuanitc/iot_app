@@ -554,7 +554,8 @@
 
     <!-- DASHBOARD PREVIEW -->
     <div class="row">
-      <div v-for="(widget, index) of widgets" :class="[widget.column]">
+      <div v-for="(widget, index) in widgets"  :class="[widget.column]">
+
         <i
           aria-hidden="true"
           class="fa fa-trash text-warning pull-right"
@@ -794,7 +795,7 @@ export default {
           templateId: "984237562348756ldksjfh",
           saverRule: false
         },
-        variableFullName: "Pump",
+        variableFullName: "Pumps",
         variable: "var1",
         icon: "fa-sun",
         column: "col-6",
@@ -825,6 +826,9 @@ export default {
         this.configIndicator.variable = this.makeid(10);
         this.widgets.push(JSON.parse(JSON.stringify(this.configIndicator)));
       }
+    },
+    deleteWidget(index){
+      this.widgets.splice(index,1);
     },
     makeid(length) {
       var result = "";
