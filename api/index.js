@@ -46,7 +46,6 @@ const options = {
     authSource:"admin"
 };
 
-try {
     mongoose.connect(uri,options).then(()=>{
         console.log("\n");
         console.log("*******************************".green);
@@ -64,8 +63,5 @@ try {
     
     
     );
-} catch (error) {
-    console.log("ERROR CONECTING MONGO");
-    console.log(error);
-}
+
 
