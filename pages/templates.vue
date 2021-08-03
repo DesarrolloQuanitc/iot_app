@@ -554,8 +554,11 @@
 
     <!-- DASHBOARD PREVIEW -->
     <div class="row">
-      <div v-for="(widget, index) in widgets"  :class="[widget.column]">
-
+      <div
+        v-for="(widget, index) in widgets"
+        :key="index"
+        :class="[widget.column]"
+      >
         <i
           aria-hidden="true"
           class="fa fa-trash text-warning pull-right"
@@ -620,6 +623,7 @@
               class="mb-3 pull-right"
               size="lg"
               @click="saveTemplate()"
+              :disabled="widgets.length ==0"
             >
               Save Template
             </base-button>
@@ -691,8 +695,8 @@
 <script>
 import { Table, TableColumn } from "element-ui";
 import { Select, Option } from "element-ui";
-
 export default {
+  middleware: "authenticated",
   components: {
     [Table.name]: Table,
     [TableColumn.name]: TableColumn,
@@ -706,7 +710,6 @@ export default {
       widgetType: "",
       templateName: "",
       templateDescription: "",
-
       ncConfig: {
         userId: "sampleuserid",
         selectedDevice: {
@@ -724,7 +727,6 @@ export default {
         chartTimeAgo: 1566,
         demo: true
       },
-
       iotSwitchConfig: {
         userId: "userid",
         selectedDevice: {
@@ -738,7 +740,6 @@ export default {
         icon: "fa-bath",
         column: "col-6"
       },
-
       configButton: {
         userId: "userid",
         selectedDevice: {
@@ -753,7 +754,6 @@ export default {
         icon: "fa-bath",
         column: "col-6"
       },
-
       iotIndicatorConfig: {
         userId: "userid",
         selectedDevice: {
@@ -767,7 +767,6 @@ export default {
         icon: "fa-bath",
         column: "col-6"
       },
-
       configButton: {
         userId: "userid",
         selectedDevice: {
@@ -785,7 +784,6 @@ export default {
         class: "danger",
         message: "{'fanstatus': 'stop'}"
       },
-
       configIndicator: {
         userId: "userid",
         selectedDevice: {
@@ -795,7 +793,7 @@ export default {
           templateId: "984237562348756ldksjfh",
           saverRule: false
         },
-        variableFullName: "Pumps",
+        variableFullName: "Pump",
         variable: "var1",
         icon: "fa-sun",
         column: "col-6",
@@ -804,31 +802,133 @@ export default {
       }
     };
   },
-
+  mounted(){
+    this.getTemplates();
+  },
   methods: {
+    //Get Templates
+    async getTemplates(){
+
+      const axiosHeaders={
+        headers:{
+          token:this.$store.state.auth.token 
+        }
+
+      }
+      try {
+        const res= await this.$axios.get("/template",axiosHeaders);
+        console.log(res.data);
+
+        if(res.data.status=="success"){
+          this.templates=res.data.data
+        }
+
+      } catch (error) {
+        this.$notify({
+          type:"danger",
+          icon:"tim-icons icon-alert-circle-exc",
+          message:"Error getting templates...."
+        });
+        console.log(error);
+        return;
+      }
+
+    },
+    //Save Templates
+    async saveTemplate() {
+      const axiosHeaders = {
+        headers: {
+          token: this.$store.state.auth.token
+        }
+      };
+      console.log(axiosHeaders)
+      const toSend = {
+        template: {
+          name: this.templateName,
+          description: this.templateDescription,
+          widgets: this.widgets
+        }
+      };
+      
+      try {
+        const res = await this.$axios.post("/template", toSend, axiosHeaders);
+        if (res.data.status == "success") {
+          this.$notify({
+            type: "success",
+            icon: "tim-icons icon-alert-circle-exc",
+            message: "Template created!"
+          });
+          this.getTemplates();
+        }
+      } catch (error) {
+        this.$notify({
+          type: "danger",
+          icon: "tim-icons icon-alert-circle-exc",
+          message: "Error creating template..."
+        });
+        console.log(error);
+        return;
+      }
+    },
+    //Delete Templates
+    async deleteTemplate(template){
+
+      const axiosHeaders={
+        headers:{
+          token: this.$store.state.auth.token
+        },
+        params:{
+          templateId:template._id
+        }
+      }
+
+      console.log(axiosHeaders)
+
+      try {
+        const res=await this.$axios.delete("/template",axiosHeaders);
+
+        if(res.data.status=="success"){
+          this.$notify({
+            type:"success",
+            icon:"tim-icons icon-alert-circle-exc",
+            message:template.name + " was deleted"
+          })
+
+          this.getTemplates();
+
+        }
+
+      } catch (error) {
+        this.$notify({
+          type:"danger",
+          icon:"tim-icons icon-alert-circle-exc",
+          message:"Error getting templates ...."
+        })
+        console.log(error)
+        return;
+      }
+
+    },
     addNewWidget() {
       if (this.widgetType == "numberchart") {
         this.ncConfig.variable = this.makeid(10);
         this.widgets.push(JSON.parse(JSON.stringify(this.ncConfig)));
       }
-
       if (this.widgetType == "switch") {
         this.iotSwitchConfig.variable = this.makeid(10);
         this.widgets.push(JSON.parse(JSON.stringify(this.iotSwitchConfig)));
       }
-
       if (this.widgetType == "button") {
         this.configButton.variable = this.makeid(10);
         this.widgets.push(JSON.parse(JSON.stringify(this.configButton)));
       }
-
       if (this.widgetType == "indicator") {
         this.configIndicator.variable = this.makeid(10);
         this.widgets.push(JSON.parse(JSON.stringify(this.configIndicator)));
       }
     },
-    deleteWidget(index){
-      this.widgets.splice(index,1);
+    deleteWidget(index) {
+      this.widgets.splice(index, 1);
     },
     makeid(length) {
       var result = "";
