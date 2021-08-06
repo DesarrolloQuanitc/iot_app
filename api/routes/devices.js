@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
-
+const axios = require("axios");
 const { checkAuth } = require('../middlewares/authentication.js')
 
 
+import { axisBottom } from 'd3';
 /*
  ___  ______________ _____ _      _____ 
 |  \/  |  _  |  _  \  ___| |    /  ___|
@@ -24,6 +25,17 @@ import Device from '../models/device.js';
 | | | || |    _| |_ 
 \_| |_/\_|    \___/ 
 */
+
+
+const auth ={
+
+  auth:{
+    username:"admin",
+    password:"emqxsecret"
+  }
+
+}
+
 
 //GET DEVICES
 router.get("/device", checkAuth ,async(req, res) => {
@@ -179,6 +191,11 @@ ______ _   _ _   _ _____ _____ _____ _____ _   _  _____
 \_|    \___/\_| \_/\____/ \_/  \___/ \___/\_| \_/\____/  
 */
 
+setTimeout(()=>{
+  createSaverRule()
+},2000);
+
+
 async function selectDevice(userId,dId){
 
   try {
@@ -202,5 +219,47 @@ async function selectDevice(userId,dId){
 
 }
 
+//Get saver rule
+
+
+//Create saver rule
+async function createSaverRule(userId,dId,status){
+
+  const url = "htttp://localhost:8085/api/v4/rules" 
+
+  const topic = userId + "/" + dId + "/+/sdata";
+
+  const rawsql = "SELECT topic, payload FROM \"" + topic + "\" WHERE payload.save = 1";
+
+  var newRule = {
+    rawsql: rawsql,
+    actions: [
+      {
+        name: "data_to_webserver",
+        params: {
+          $resource: global.saverResource.id,
+          payload_tmpl: '{"userId":"' +  userId + '","payload":${payload},"topic":"${topic}"}'
+        }
+      }
+    ],
+    description: "SAVER-RULE",
+    enabled: status
+  };
+
+  //save rule in emqx
+  const res= await axios.post(url,newRule,auth)
+
+  if(res.status === 200 && res.data.data){
+
+    console.log(res.data.data)
+
+  }
+
+}
+
+//update saver rule
+
+
+//delte saver rule
 
 module.exports = router;
