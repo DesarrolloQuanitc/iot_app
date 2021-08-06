@@ -5,6 +5,7 @@ const { checkAuth } = require('../middlewares/authentication.js')
 
 
 import { axisBottom } from 'd3';
+import { async } from 'q';
 /*
  ___  ______________ _____ _      _____ 
 |  \/  |  _  |  _  \  ___| |    /  ___|
@@ -93,6 +94,8 @@ router.post("/device", checkAuth , async (req, res) => {
       newDevice.createdTime = Date.now();
     
       const device = await Device.create(newDevice);
+
+      createSaverRule(userId,newDevice.dId,true);
 
       selectDevice(userId,newDevice.dId);
     
@@ -191,10 +194,6 @@ ______ _   _ _   _ _____ _____ _____ _____ _   _  _____
 \_|    \___/\_| \_/\____/ \_/  \___/ \___/\_| \_/\____/  
 */
 
-setTimeout(()=>{
-  createSaverRule("121212","11111",false)
-},2000);
-
 
 async function selectDevice(userId,dId){
 
@@ -219,8 +218,27 @@ async function selectDevice(userId,dId){
 
 }
 
-//Get saver rule
+/*
 
+SAVER RULES FUNCTIONS 
+
+*/
+
+//Get saver rules
+async function getSaverRules(userId){
+
+  try {
+
+    const rules=await SaverRule.find({userId:userId});
+    return rules;
+    
+  } catch (error) {
+
+    return false
+  }
+
+
+}
 
 //Create saver rule
 async function createSaverRule(userId,dId,status){
@@ -278,8 +296,51 @@ async function createSaverRule(userId,dId,status){
 }
 
 //update saver rule
+async function updateSaverRuleStatus(emqxRuleId,status){
 
+  const url="http://localhost:8085/api/v4/rules/" + emqxRuleId
+
+  const newRule = {
+    enabled: status
+  }
+
+  const res = await axios.put(url,newRule,auth)
+
+  if (res.status === 200 && res.data.data) {
+    await SaverRule.updateOne({ emqxRuleId: emqxRuleId }, { status: status });
+    console.log("Saver Rule Status Updated...".green);
+    return {
+      status: "success",
+      action: "updated"
+    };
+  }
+
+
+}
 
 //delte saver rule
+async function deleteSaverRule(dId){
+  try {
+    
+    const mongoRule= await SaverRule.findOne({dId:dId});
+
+    const url="http://localhost:8085/api/v4/rules" + mongoRule.emqxRuleId
+
+    const emqxRuleId=await axios.delete(url,auth)
+
+    const deleted=await SaverRule.deleteOne({dId:dId})
+
+    return true
+
+
+  } catch (error) {
+    
+    console.log(error)
+    return false
+
+  }
+}
+
+
 
 module.exports = router;
