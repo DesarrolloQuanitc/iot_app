@@ -103,10 +103,10 @@ router.post("/device", checkAuth , async (req, res) => {
     
       newDevice.userId = userId;
       newDevice.createdTime = Date.now();
-    
-      const device = await Device.create(newDevice);
 
       await createSaverRule(userId,newDevice.dId,true);
+
+      const device = await Device.create(newDevice);
 
       await selectDevice(userId,newDevice.dId);
     
@@ -143,6 +143,8 @@ router.delete("/device",checkAuth , async(req, res) => {
 
   const userId= req.userData._id;
   const dId = req.query.dId
+
+  await deleteSaverRule(dId)
 
   const result =await Device.deleteOne({userId:userId,dId:dId});
 
@@ -194,6 +196,28 @@ router.put("/device", checkAuth ,(req, res) => {
   
 
 });
+
+//SAVER-RULE STATUS UPDATER
+router.put('/saver-rule', checkAuth, async (req, res) => {
+
+  
+  const rule = req.body.rule;
+
+  console.log(rule)
+
+  await updateSaverRuleStatus(rule.emqxRuleId, rule.status)
+
+  const toSend = {
+    status: "success"
+  };
+
+  res.json(toSend);
+  
+
+});
+
+
+
 
 
 /* 
@@ -335,7 +359,7 @@ async function deleteSaverRule(dId){
     
     const mongoRule= await SaverRule.findOne({dId:dId});
 
-    const url="http://localhost:8085/api/v4/rules" + mongoRule.emqxRuleId
+    const url="http://localhost:8085/api/v4/rules/" + mongoRule.emqxRuleId
 
     const emqxRuleId=await axios.delete(url,auth)
 
