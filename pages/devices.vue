@@ -120,7 +120,7 @@
       </card>
     </div>
 
-    <Json :value="templates"></Json>
+    <Json :value="$store.state.devices"></Json>
     
   </div>
 </template>

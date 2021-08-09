@@ -4,7 +4,7 @@ const axios = require("axios");
 const { checkAuth } = require('../middlewares/authentication.js')
 
 
-import { axisBottom } from 'd3';
+import { axisBottom, index } from 'd3';
 import { async } from 'q';
 /*
  ___  ______________ _____ _      _____ 
@@ -44,7 +44,18 @@ router.get("/device", checkAuth ,async(req, res) => {
   try {
     const userId = req.userData._id;
 
-    const devices= await  Device.find({userId: userId});
+    //get devices 
+    var devices= await  Device.find({userId: userId});
+    devices=JSON.parse(JSON.stringify(devices));
+
+    //Get saver rules 
+    const saverRules =  await getSaverRules(userId);
+
+    devices.forEach((device,index ) =>{
+
+      devices[index].saverRule = saverRules.filter(saverRule => saverRule.dId == device.dId)[0];
+
+    })
   
     const  toSend={
       status: "succes",
