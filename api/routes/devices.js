@@ -16,6 +16,7 @@ import { async } from 'q';
 */
 import Device from '../models/device.js';
 import SaverRule from '../models/emqx_saver_rule.js'
+import Template from '../models/template.js'
 
 
 /* 
@@ -51,9 +52,14 @@ router.get("/device", checkAuth ,async(req, res) => {
     //Get saver rules 
     const saverRules =  await getSaverRules(userId);
 
+    //Get templates
+    const templates =  await getTemplates(userId);
+    
     devices.forEach((device,index ) =>{
 
       devices[index].saverRule = saverRules.filter(saverRule => saverRule.dId == device.dId)[0];
+      devices[index].template=templates.filter(template => template._id == device.templateId)
+
 
     })
   
@@ -258,6 +264,22 @@ async function selectDevice(userId,dId){
 SAVER RULES FUNCTIONS 
 
 */
+
+//Get Templates
+async function getTemplates(userId){
+
+  try {
+
+    const templates=await Template.find({userId:userId});
+    return templates;
+    
+  } catch (error) {
+
+    return false
+  }
+
+
+}
 
 //Get saver rules
 async function getSaverRules(userId){
