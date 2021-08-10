@@ -173,12 +173,12 @@ router.delete("/device",checkAuth , async(req, res) => {
 });
 
 //SELECTED DEVICE
-router.put("/device", checkAuth ,(req, res) => {
+router.put("/device", checkAuth ,async (req, res) => {
   
   const dId = req.body.dId;
   const userId= req.userData._id;
   
-  if(selectDevice(userId,dId)){
+  if(await selectDevice(userId,dId)){
     const toSend = {
       status: "success"
     }
