@@ -58,7 +58,7 @@ router.get("/device", checkAuth ,async(req, res) => {
     devices.forEach((device,index ) =>{
 
       devices[index].saverRule = saverRules.filter(saverRule => saverRule.dId == device.dId)[0];
-      devices[index].template=templates.filter(template => template._id == device.templateId)
+      devices[index].template=templates.filter(template => template._id == device.templateId)[0];
 
 
     })
