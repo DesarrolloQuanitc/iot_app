@@ -15,6 +15,7 @@ import { async } from 'q';
 \_|  |_/\___/|___/ \____/\_____/\____/  
 */
 import Device from '../models/device.js';
+import AlarmRule from '../models/emqx_alarm_rule.js';
 import SaverRule from '../models/emqx_saver_rule.js'
 import Template from '../models/template.js'
 
@@ -55,11 +56,15 @@ router.get("/device", checkAuth ,async(req, res) => {
     //Get templates
     const templates =  await getTemplates(userId);
     
+    //Get Alarm Rules
+    const alarmRules= await getAlarmRules(userId)
+
+    //Saver rules to ->devices
     devices.forEach((device,index ) =>{
 
       devices[index].saverRule = saverRules.filter(saverRule => saverRule.dId == device.dId)[0];
       devices[index].template=templates.filter(template => template._id == device.templateId)[0];
-
+      devices[index].alarmRules=alarmRules.filter(alarmRule => alarmRule.dId == device.dId);
 
     })
   
@@ -234,6 +239,21 @@ ______ _   _ _   _ _____ _____ _____ _____ _   _  _____
 | |   | |_| | |\  | \__/\ | |  _| |_\ \_/ / |\  |/\__/ /
 \_|    \___/\_| \_/\____/ \_/  \___/ \___/\_| \_/\____/  
 */
+
+
+async function getAlarmRules(userId){
+
+  try {
+    
+    const rules= await AlarmRule.find({userId:userId})
+    return rules
+
+
+  } catch (error) {
+    return "error"
+  }
+
+}
 
 
 async function selectDevice(userId,dId){
