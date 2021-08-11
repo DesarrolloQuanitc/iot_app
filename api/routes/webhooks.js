@@ -6,7 +6,7 @@ const colors = require("colors");
 import Data from "../models/data.js";
 import Device from "../models/device.js";
 import Notification from "../models/notifications.js"
-
+import AlarmRule from "../models/emqx_alarm_rule.js";
 
 router.post("/saver-webhook", async (req, res) => {
 
@@ -50,7 +50,11 @@ router.post("/alarm-webhook",async (req,res)=>{
       return
     }
 
+    res.sendStatus(200)
+
     const incomingAlarm=req.body
+
+    updateAlarmCounter(incomingAlarm.emqxRuleId);
 
     const lastNotif = await Notification.find({ dId: incomingAlarm.dId, emqxRuleId: incomingAlarm.emqxRuleId }).sort({ time: -1 }).limit(1);
 
@@ -70,11 +74,6 @@ router.post("/alarm-webhook",async (req,res)=>{
 
     }
 
-    
-
-    
-
-    res.sendStatus(200)
 
   } catch (error) {
     
@@ -96,6 +95,16 @@ function saveNotifToMongo(incomingAlarm) {
   Notification.create(newNotif);
 
 }
+
+async function updateAlarmCounter(emqxRuleId) {
+  
+  try {
+     await AlarmRule.update({ emqxRuleId: emqxRuleId }, { $inc: { counter: 1 } });
+  } catch (error) {
+      console.log(error)
+  }
+}
+
 
 
 
