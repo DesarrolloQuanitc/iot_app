@@ -5,6 +5,8 @@ const colors = require("colors");
 
 import Data from "../models/data.js";
 import Device from "../models/device.js";
+import Notification from "../models/notifications.js"
+
 
 router.post("/saver-webhook", async (req, res) => {
 
@@ -38,5 +40,45 @@ router.post("/saver-webhook", async (req, res) => {
 
 
 });
+
+router.post("/alarm-webhook",async (req,res)=>{
+
+  try {
+    
+    if(req.headers.token != 121212){
+      req.sendStatus(404)
+      return
+    }
+
+    const incomingAlarm=req.body
+
+    console.log(incomingAlarm)
+
+    saveNotifToMongo(incomingAlarm)
+
+    res.sendStatus(200)
+
+  } catch (error) {
+    
+    console.log(error)
+    res.sendStatus(200);
+
+  }
+
+
+
+})
+
+
+function saveNotifToMongo(incomingAlarm) {
+
+  var newNotif = incomingAlarm;
+  newNotif.time = Date.now();
+  newNotif.readed = false;
+  Notification.create(newNotif);
+
+}
+
+
 
 module.exports = router;
