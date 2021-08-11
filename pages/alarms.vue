@@ -172,6 +172,7 @@ export default {
       selectedWidgetIndex: null,
       newRule: {
         dId: null,
+        deviceName: null,
         status: true,
         variableFullName: null,
         variable: null,
@@ -286,6 +287,7 @@ export default {
       }
 
     this.newRule.dId=this.$store.state.selectedDevice.dId;
+    this.newRule.deviceName=this.$store.state.selectedDevice.name;
     this.newRule.variableFullName=this.$store.state.selectedDevice.template.widgets[this.selectedWidgetIndex].variableFullName;
     this.newRule.variable=this.$store.state.selectedDevice.template.widgets[this.selectedWidgetIndex].variable
 

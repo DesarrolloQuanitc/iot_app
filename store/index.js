@@ -1,13 +1,18 @@
 export const state = () => ({
   auth: null,
   devices: [],
-  selectedDevice: {}
+  selectedDevice: {},
+  notifications:[]
 });
 
 export const mutations = {
 
   setAuth(state, auth) {
     state.auth = auth;
+  },
+
+  setNotifications(state, notifications) {
+    state.notifications = notifications;
   },
 
   setDevices(state, devices) {
@@ -53,6 +58,24 @@ export const actions = {
       });
 
       this.commit("setDevices", res.data.data)
+    });
+    
+  },
+  
+  getNotifications() {
+
+    const axiosHeader = {
+      headers: {
+        token: this.state.auth.token
+      }
+    };
+
+    this.$axios.get("/notifications", axiosHeader)
+    .then(res => {
+      console.log(res.data.data);
+      this.commit("setNotifications", res.data.data)
+    }).catch(error => {
+      console.log(error);
     });
     
   }
