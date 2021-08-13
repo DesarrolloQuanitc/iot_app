@@ -194,6 +194,9 @@ export default {
 
           }else if(msgType =="sdata"){
 
+            $nuxt.$emit(topic,JSON.parse(message.toString()))
+            return
+
           }
 
 
@@ -207,6 +210,9 @@ export default {
 
       });
 
+      $nuxt.$on('mqtt-sender',(toSend) => {
+        this.client.publish(toSend.topic,JSON.stringify(toSend.msg) )
+      })
 
     },
     toggleSidebar() {
