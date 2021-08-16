@@ -39,7 +39,6 @@
                 time: Date.now(),
                 nowTime: Date.now(),
                 isMounted: false,
-
                 chartOptions: {
                     credits: {
                         enabled: false
@@ -71,7 +70,6 @@
                             }
                         }
                     },
-
                     plotOptions: {
                         series: {
                             label: {
@@ -105,7 +103,6 @@
                         }]
                     }
                 },
-
             };
         },
         watch: {
@@ -113,39 +110,28 @@
                 immediate: true,
                 deep: true,
                 handler() {
-
-
-
                     setTimeout(() => {
                         
                         this.chartOptions.series[0].name = this.config.variableFullName + " " + this.config.unit;
                         this.updateColorClass();
                         window.dispatchEvent(new Event('resize'));
                     }, 1000);
-
                 }
             }
         },
         mounted() {
-
-
             this.$nuxt.$on(this.config.userId + '/' + this.config.selectedDevice.dId + '/' + this.config.variable + "/sdata", this.procesReceivedData);
-
             this.getNow();
             this.getChartData();
             this.updateColorClass();
-
         },
         beforeDestroy() {
             this.$nuxt.$on(this.config.userId + '/' + this.config.selectedDevice.dId + '/' + this.config.variable + "/sdata", this.procesReceivedData);
         },
         methods: {
-
             updateColorClass() {
                 console.log("update" + this.config.class)
-
                 var c = this.config.class;
-
                 if (c == "success") {
                     this.chartOptions.series[0].color = "#00f2c3";
                 }
@@ -158,59 +144,40 @@
                 if (c == "danger") {
                     this.chartOptions.series[0].color = "#fd5d93";
                 }
-
                 this.chartOptions.series[0].name = this.config.variableFullName + " " + this.config.unit;
-
             },
-
             getChartData() {
-
                 if (this.config.demo) {
                     this.chartOptions.series[0].data = [[1606659071668, 22], [1606659072668, 27], [1606659073668, 32], [1606659074668, 7]];
                     this.isMounted = true;
                     return;
                 }
-
-
                 const axiosHeaders = {
                     headers: {
                         token: $nuxt.$store.state.auth.accessToken,
                     },
                     params: { dId: this.config.selectedDevice.dId, variable: this.config.variable, chartTimeAgo: this.config.chartTimeAgo }
                 }
-
                 this.$axios.get("/get-small-charts-data", axiosHeaders)
                     .then(res => {
                         
-
                         const data = res.data.data;
                         console.log(res.data)
-
                         data.forEach(element => {
                             var aux = []
-
                             aux.push(element.time + (new Date().getTimezoneOffset() * 60 * 1000 * -1));
                             aux.push(element.value);
-
                             this.chartOptions.series[0].data.push(aux);
                         });
-
                         this.isMounted = true;
-
                         return;
-
                     })
                     .catch(e => {
-
                         console.log(e)
                         return;
-
                     });
-
             },
-
             getIconColorClass() {
-
                 if (this.config.class == "success") {
                     return "text-success";
                 }
@@ -224,45 +191,35 @@
                     return "text-danger";
                 }
             },
-
             procesReceivedData(data) {
                 this.time = Date.now();
                 this.value = data.value;
             },
-
             getNow() {
                 this.nowTime = Date.now();
                 setTimeout(() => {
                     this.getNow();
                 }, 1000);
             },
-
             getTimeAgo(seconds) {
-
                 if (seconds < 0) {
                     seconds = 0;
                 }
-
                 if (seconds < 59) {
                     return seconds.toFixed() + " secs";
                 }
-
                 if (seconds > 59 && seconds <= 3600) {
                     seconds = seconds / 60;
                     return seconds.toFixed() + " min";
                 }
-
                 if (seconds > 3600 && seconds <= 86400) {
                     seconds = seconds / 3600;
                     return seconds.toFixed() + " hour";
                 }
-
                 if (seconds > 86400) {
                     seconds = seconds / 86400;
                     return seconds.toFixed() + " day";
                 }
-
-
             },
         }
     };

@@ -120,7 +120,7 @@ export default {
   methods: {
     startMqttClient(){
 
-      const options = {
+      var options = {
         host: "localhost",
         port: 8083,
         endpoint: "/mqtt",
