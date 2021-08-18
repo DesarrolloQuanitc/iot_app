@@ -7,6 +7,7 @@ const { checkAuth } = require('../middlewares/authentication.js');
 //models import
 import User from "../models/user.js";
 import EmqxAuthRule from "../models/emqx_auth.js";
+import { async } from "q";
 
 //POST -> req.body
 //GET -> req.query
@@ -127,64 +128,111 @@ router.post("/getmqttcredentials", checkAuth,  async (req, res) => {
 
 });
 
+//GET MQTT CREDENTIALS FOR RECONNECTION
+router.post("/getmqttcredentialsforreconnection", checkAuth, async (req, res) => {
 
+    const userId = req.userData._id;
+    const credentials = await getWebUserMqttCredentialsForReconnection(userId);
+  
+    const toSend = {
+      status: "success",
+      username: credentials.username,
+      password: credentials.password
+    }
+  
+    console.log(toSend);
+    res.json(toSend);
+  
+    setTimeout(() => {
+      getWebUserMqttCredentials(userId);
+    }, 15000);
+  
+  
+  });
+
+  //**********************
+//**** FUNCTIONS *******
+//********************** 
 
 // mqtt credential types: "user", "device", "superuser"
-async function getWebUserMqttCredentials(userId){
-
-  try {
-    var rule = await EmqxAuthRule.find({ type: "user", userId: userId });
-
-    if(rule.length == 0){
-
-      const newRule = {
-        userId: userId,
-        username: makeid(10),
-        password: makeid(10),
-        publish: [userId + "/#"],
-        subscribe: [userId + "/#"],
-        type: "user",
-        time: Date.now(),
-        updatedTime: Date.now()
+async function getWebUserMqttCredentials(userId) {
+    try {
+      var rule = await EmqxAuthRule.find({ type: "user", userId: userId });
+  
+      if (rule.length == 0) {
+        const newRule = {
+          userId: userId,
+          username: makeid(10),
+          password: makeid(10),
+          publish: [userId + "/#"],
+          subscribe: [userId + "/#"],
+          type: "user",
+          time: Date.now(),
+          updatedTime: Date.now()
+        };
+  
+        const result = await EmqxAuthRule.create(newRule);
+  
+        const toReturn = {
+          username: result.username,
+          password: result.password
+        };
+  
+        return toReturn;
       }
-
-    const result = await EmqxAuthRule.create(newRule);
-
-    const toReturn = {
-      username: result.username,
-      password: result.password
-    }
-
-    
-    return toReturn;
-
-    }
-
-    const newUserName = makeid(10);
-    const newPassword = makeid(10);
-
-    const result = await EmqxAuthRule.updateOne({type:"user", userId: userId}, {$set: {username: newUserName, password: newPassword, updatedTime: Date.now()}});
-
-        // update response example
-      //{ n: 1, nModified: 1, ok: 1 }
-
-    if (result.n == 1 && result.ok == 1) {
-        return {
+  
+      const newUserName = makeid(10);
+      const newPassword = makeid(10);
+  
+      const result = await EmqxAuthRule.updateOne(
+        { type: "user", userId: userId },
+        {
+          $set: {
             username: newUserName,
-            password: newPassword
+            password: newPassword,
+            updatedTime: Date.now()
+          }
         }
-    }else{
+      );
+  
+      // update response example
+      //{ n: 1, nModified: 1, ok: 1 }
+  
+      if (result.n == 1 && result.ok == 1) {
+        return {
+          username: newUserName,
+          password: newPassword
+        };
+      } else {
         return false;
+      }
+    } catch (error) {
+      console.log(error);
+      return false;
     }
-
-  } catch (error) {
-    console.log(error);
-    return false;
   }
 
-}
+async function getWebUserMqttCredentialsForReconnection(userId){
 
-
+    try{
+      const rule = await EmqxAuthRule.find({type: "user", userId: userId});
+  
+      if (rule.length == 1){
+        const toReturn = {
+          username: rule[0].username,
+          password: rule[0].password
+        }
+        return toReturn;
+      }
+  
+    }
+    catch(error){
+      console.log(error);
+      return false;
+    }
+  
+  }
+  
 function makeid(length) {
   var result = '';
   var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
