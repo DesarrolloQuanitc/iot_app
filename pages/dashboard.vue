@@ -11,7 +11,7 @@
       
     >
 
-    <Json :value="fixWidget(widget)"></Json>
+    <!-- <Json :value="fixWidget(widget)"></Json> -->
 
       <Rtnumberchart
         v-if="widget.widget == 'numberchart'"
