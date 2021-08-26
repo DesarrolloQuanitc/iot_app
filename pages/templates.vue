@@ -743,7 +743,7 @@ export default {
         decimalPlaces: 2,
         widget: "numberchart",
         icon: "fa-bath",
-        chartTimeAgo: 1566,
+        chartTimeAgo: 60,
         demo: true
       },
       iotSwitchConfig: {
@@ -886,7 +886,19 @@ export default {
       console.log(axiosHeaders);
       try {
         const res = await this.$axios.delete("/template", axiosHeaders);
-        if (res.data.status == "success") {
+
+        console.log(res.data)
+        if (res.data.status == "fail" && res.data.error == "template in use") {
+          this.$notify({
+            type: "danger",
+            icon: "tim-icons icon-alert-circle-exc",
+            message: template.name + " is in use. First remove the devices linked to the template!"
+          });
+          
+          return;
+        }
+       
+       if (res.data.status == "success") {
           this.$notify({
             type: "success",
             icon: "tim-icons icon-alert-circle-exc",
@@ -894,6 +906,8 @@ export default {
           });
           
           this.getTemplates();
+
+          this.widgets=[];
         }
       } catch (error) {
         this.$notify({

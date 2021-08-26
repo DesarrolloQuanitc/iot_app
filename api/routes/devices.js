@@ -1,334 +1,289 @@
 const express = require("express");
 const router = express.Router();
+const { checkAuth } = require("../middlewares/authentication.js");
 const axios = require("axios");
-const { checkAuth } = require('../middlewares/authentication.js')
+
+import Device from "../models/device.js";
+import SaverRule from "../models/emqx_saver_rule.js";
+import Template from "../models/template.js";
+import AlarmRule from "../models/emqx_alarm_rule.js";
+import EmqxAuthRule from "../models/emqx_auth.js";
 
 
-import { axisBottom, index } from 'd3';
-import { async } from 'q';
-/*
- ___  ______________ _____ _      _____ 
-|  \/  |  _  |  _  \  ___| |    /  ___|
-| .  . | | | | | | | |__ | |    \ `--. 
-| |\/| | | | | | | |  __|| |     `--. \
-| |  | \ \_/ / |/ /| |___| |____/\__/ /
-\_|  |_/\___/|___/ \____/\_____/\____/  
-*/
-import Device from '../models/device.js';
-import AlarmRule from '../models/emqx_alarm_rule.js';
-import SaverRule from '../models/emqx_saver_rule.js'
-import Template from '../models/template.js'
 
+//******************
+//**** A P I *******
+//****************** 
 
-/* 
-  ___  ______ _____ 
- / _ \ | ___ \_   _|
-/ /_\ \| |_/ / | |  
-|  _  ||  __/  | |  
-| | | || |    _| |_ 
-\_| |_/\_|    \___/ 
-*/
-
-
-const auth ={
-
-  auth:{
-    username:"admin",
-    password:"emqxsecret"
+const auth = {
+  auth: {
+    username: "admin",
+    password: "emqxsecret"
   }
-
-}
-
+};
 
 //GET DEVICES
-router.get("/device", checkAuth ,async(req, res) => {
-
+router.get("/device", checkAuth, async (req, res) => {
   try {
     const userId = req.userData._id;
 
-    //get devices 
-    var devices= await  Device.find({userId: userId});
-    devices=JSON.parse(JSON.stringify(devices));
+    //get devices
+    var devices = await Device.find({ userId: userId });
 
-    //Get saver rules 
-    const saverRules =  await getSaverRules(userId);
+    //mongoose array to js array
+    devices = JSON.parse(JSON.stringify(devices));
 
-    //Get templates
-    const templates =  await getTemplates(userId);
-    
-    //Get Alarm Rules
-    const alarmRules= await getAlarmRules(userId)
+    //get saver rules
+    const saverRules = await getSaverRules(userId);
 
-    //Saver rules to ->devices
-    devices.forEach((device,index ) =>{
+    //get templates
+    const templates = await getTemplates(userId);
 
-      devices[index].saverRule = saverRules.filter(saverRule => saverRule.dId == device.dId)[0];
-      devices[index].template=templates.filter(template => template._id == device.templateId)[0];
-      devices[index].alarmRules=alarmRules.filter(alarmRule => alarmRule.dId == device.dId);
+    //get alarm rules
+    const alarmRules = await getAlarmRules(userId);
 
-    })
-  
-    const  toSend={
-      status: "succes",
-      data:devices
-    }
+    //saver rules to -> devices
+    devices.forEach((device, index) => {
+      devices[index].saverRule = saverRules.filter(
+        saverRule => saverRule.dId == device.dId
+      )[0];
+      devices[index].template = templates.filter(
+        template => template._id == device.templateId
+      )[0];
+      devices[index].alarmRules = alarmRules.filter(
+        alarmRule => alarmRule.dId == device.dId
+      );
+    });
 
-    res.json(toSend);
+    const response = {
+      status: "success",
+      data: devices
+    };
 
+    res.json(response);
   } catch (error) {
-    
     console.log("ERROR GETTING DEVICES");
+    console.log(error);
 
-    const toSend = {
+    const response = {
       status: "error",
       error: error
-    }
+    };
 
-    return res.status(500).json(toSend);
-
-
+    return res.status(500).json(response);
   }
-
- 
-
 });
-
-
-/* 
-{
-   "newDevice":{
-      "dId":"121212",
-      "name":"HOME",
-      "templateName":"esp32 template",
-      "templateId":"ababab"
-   }
-}
-*/
 
 //NEW DEVICE
-router.post("/device", checkAuth , async (req, res) => {
+router.post("/device", checkAuth, async (req, res) => {
+  try {
+    const userId = req.userData._id;
 
-    try {
-      const userId = req.userData._id;
-      var newDevice = req.body.newDevice;
-    
-      newDevice.userId = userId;
-      newDevice.createdTime = Date.now();
+    var newDevice = req.body.newDevice;
 
-      newDevice.password= makeid(10);
+    newDevice.userId = userId;
 
-      await createSaverRule(userId,newDevice.dId,true);
+    newDevice.createdTime = Date.now();
 
-      const device = await Device.create(newDevice);
+    newDevice.password = makeid(10);
 
-      await selectDevice(userId,newDevice.dId);
-    
-      const toSend = {
-        status: "success"
-      }
-    
-      return res.json(toSend);
+    await createSaverRule(userId, newDevice.dId, true);
 
-    } catch (error) {
-      
-      console.log("ERROR CREATING DEVICE");
-      console.log(error);
+    const device = await Device.create(newDevice);
 
-      const toSend = {
-        status: "error",
-        error: error
-      }
+    await selectDevice(userId, newDevice.dId);
 
-      return res.status(500).json(toSend);
+    const response = {
+      status: "success"
+    };
 
-    }
-    
+    return res.json(response);
+  } catch (error) {
+    console.log("ERROR CREATING NEW DEVICE");
+    console.log(error);
 
-  
+    const response = {
+      status: "error",
+      error: error
+    };
 
-  
+    return res.status(500).json(response);
+  }
 });
 
-// DELETE DEVICE
-router.delete("/device",checkAuth , async(req, res) => {
-
+//DELETE DEVICE
+router.delete("/device", checkAuth, async (req, res) => {
   try {
+    const userId = req.userData._id;
+    const dId = req.query.dId;
 
-  const userId= req.userData._id;
-  const dId = req.query.dId
+    //deleting saver rule.
+    await deleteSaverRule(dId);
 
-  await deleteSaverRule(dId)
+    //deleting all posible alarm rules
+    await deleteAllAlarmRules(userId, dId);
 
-  const result =await Device.deleteOne({userId:userId,dId:dId});
+    //deleting all posible mqtt device credentials
+    await deleteMqttDeviceCredentials(dId);
 
-  const toSend = {
-    status: "success",
-    data: result
-  }
+    //deleting device
+    const result = await Device.deleteOne({ userId: userId, dId: dId });
 
-  return res.json(toSend);
-    
+    //devices after deletion
+    const devices = await Device.find({ userId: userId });
+
+    if (devices.length >= 1) {
+      //any selected?
+      var found = false;
+      devices.forEach(devices => {
+        if (devices.selected == true) {
+          found = true;
+        }
+      });
+
+      //if no selected...
+      //we need to selet the first
+      if (!found) {
+        await Device.updateMany({ userId: userId }, { selected: false });
+        await Device.updateOne(
+          { userId: userId, dId: devices[0].dId },
+          { selected: true }
+        );
+      }
+    }
+
+    const response = {
+      status: "success",
+      data: result
+    };
+
+    return res.json(response);
   } catch (error) {
     console.log("ERROR DELETING DEVICE");
     console.log(error);
 
-    const toSend = {
-        status: "error",
-        error: error
-      }
+    const response = {
+      status: "error",
+      error: error
+    };
 
-    return res.status(500).json(toSend);
-
+    return res.status(500).json(response);
   }
-  
-  
-  
 });
 
-//SELECTED DEVICE
-router.put("/device", checkAuth ,async (req, res) => {
-  
-  const dId = req.body.dId;
-  const userId= req.userData._id;
-  
-  if(await selectDevice(userId,dId)){
-    const toSend = {
-      status: "success"
-    }
-  
-    return res.json(toSend);
-  }else{
+//UPDATE DEVICE (SELECTOR)
+router.put("/device", checkAuth, async (req, res) => {
+  try {
+    const dId = req.body.dId;
+    const userId = req.userData._id;
 
-    const toSend = {
-      status: "error"
+    if (await selectDevice(userId, dId)) {
+      const response = {
+        status: "success"
+      };
+
+      return res.json(response);
+    } else {
+      const response = {
+        status: "error"
+      };
+
+      return res.json(response);
     }
-  
-    return res.json(toSend);
+  } catch (error) {
+    console.log(error);
   }
-  
-  
-
 });
 
 //SAVER-RULE STATUS UPDATER
-router.put('/saver-rule', checkAuth, async (req, res) => {
+router.put("/saver-rule", checkAuth, async (req, res) => {
+  try {
+    const rule = req.body.rule;
 
-  
-  const rule = req.body.rule;
+    console.log(rule);
 
-  console.log(rule)
+    await updateSaverRuleStatus(rule.emqxRuleId, rule.status);
 
-  await updateSaverRuleStatus(rule.emqxRuleId, rule.status)
+    const response = {
+      status: "success"
+    };
 
-  const toSend = {
-    status: "success"
-  };
-
-  res.json(toSend);
-  
-
+    res.json(response);
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 
 
+//**********************
+//**** FUNCTIONS *******
+//********************** 
 
-
-/* 
-______ _   _ _   _ _____ _____ _____ _____ _   _  _____ 
-|  ___| | | | \ | /  __ \_   _|_   _|  _  | \ | |/  ___|
-| |_  | | | |  \| | /  \/ | |   | | | | | |  \| |\ `--. 
-|  _| | | | | . ` | |     | |   | | | | | | . ` | `--. \
-| |   | |_| | |\  | \__/\ | |  _| |_\ \_/ / |\  |/\__/ /
-\_|    \___/\_| \_/\____/ \_/  \___/ \___/\_| \_/\____/  
-*/
-
-
-async function getAlarmRules(userId){
-
+async function getAlarmRules(userId) {
   try {
-    
-    const rules= await AlarmRule.find({userId:userId})
-    return rules
-
-
+    const rules = await AlarmRule.find({ userId: userId });
+    return rules;
   } catch (error) {
-    return "error"
+    return "error";
   }
-
 }
 
-
-async function selectDevice(userId,dId){
-
+async function selectDevice(userId, dId) {
   try {
-    
-    const result = await Device.updateMany({userId:userId},{selected: false});
-    const resul2 = await Device.updateOne({dId:dId,userId:userId},{selected:true});
+    const result = await Device.updateMany(
+      { userId: userId },
+      { selected: false }
+    );
 
+    const result2 = await Device.updateOne(
+      { dId: dId, userId: userId },
+      { selected: true }
+    );
 
-  return true ;
-
+    return true;
   } catch (error) {
-    
-    console.log("ERROR IN SELECT DEVICE FUNCTION");
+    console.log("ERROR IN 'selectDevice' FUNCTION ");
     console.log(error);
-
-    return false ;
-
+    return false;
   }
-
-  
-
 }
 
 /*
-
-SAVER RULES FUNCTIONS 
-
+ SAVER RULES FUNCTIONS
 */
 
-//Get Templates
-async function getTemplates(userId){
-
+//get templates
+async function getTemplates(userId) {
   try {
-
-    const templates=await Template.find({userId:userId});
+    const templates = await Template.find({ userId: userId });
     return templates;
-    
   } catch (error) {
-
-    return false
+    return false;
   }
-
-
 }
 
-//Get saver rules
-async function getSaverRules(userId){
-
+//get saver rules
+async function getSaverRules(userId) {
   try {
-
-    const rules=await SaverRule.find({userId:userId});
+    const rules = await SaverRule.find({ userId: userId });
     return rules;
-    
   } catch (error) {
-
-    return false
+    return false;
   }
-
-
 }
 
-//Create saver rule
-async function createSaverRule(userId,dId,status){
+//create saver rule
+async function createSaverRule(userId, dId, status) {
+
 
   try {
-    
-    const url = "htttp://localhost:8085/api/v4/rules" 
+    const url = "http://localhost:8085/api/v4/rules";
 
     const topic = userId + "/" + dId + "/+/sdata";
 
-    const rawsql = "SELECT topic, payload FROM \"" + topic + "\" WHERE payload.save = 1";
+    const rawsql =
+      'SELECT topic, payload FROM "' + topic + '" WHERE payload.save = 1';
 
     var newRule = {
       rawsql: rawsql,
@@ -337,7 +292,10 @@ async function createSaverRule(userId,dId,status){
           name: "data_to_webserver",
           params: {
             $resource: global.saverResource.id,
-            payload_tmpl: '{"userId":"' +  userId + '","payload":${payload},"topic":"${topic}"}'
+            payload_tmpl:
+              '{"userId":"' +
+              userId +
+              '","payload":${payload},"topic":"${topic}"}'
           }
         }
       ],
@@ -345,91 +303,136 @@ async function createSaverRule(userId,dId,status){
       enabled: status
     };
 
-    //save rule in emqx
-    const res= await axios.post(url,newRule,auth)
+    //save rule in emqx - grabamos la regla en emqx
+    const res = await axios.post(url, newRule, auth);
 
-    if(res.status === 200 && res.data.data){
 
-      console.log(res.data.data)
-
+    if (res.status === 200 && res.data.data) {
       await SaverRule.create({
-        userId:userId,
-        dId:dId,
-        emqxRuleId:res.data.data.id,
-        status:status
-      })
+        userId: userId,
+        dId: dId,
+        emqxRuleId: res.data.data.id,
+        status: status
+      });
 
       return true;
-
-    }else{
+    } else {
       return false;
     }
-
-    } catch (error) {
-      console.log("ERROR creating saver rule")
-      console.log(error)
-      return true;
-    }
-
-
+  } catch (error) {
+    console.log("Error creating saver rule");
+    console.log(error);
+    return false;
+  }
 }
 
 //update saver rule
-async function updateSaverRuleStatus(emqxRuleId,status){
+async function updateSaverRuleStatus(emqxRuleId, status) {
+  try {
+    const url = "http://localhost:8085/api/v4/rules/" + emqxRuleId;
 
-  const url="http://localhost:8085/api/v4/rules/" + emqxRuleId
-
-  const newRule = {
-    enabled: status
-  }
-
-  const res = await axios.put(url,newRule,auth)
-
-  if (res.status === 200 && res.data.data) {
-    await SaverRule.updateOne({ emqxRuleId: emqxRuleId }, { status: status });
-    console.log("Saver Rule Status Updated...".green);
-    return {
-      status: "success",
-      action: "updated"
+    const newRule = {
+      enabled: status
     };
+
+    const res = await axios.put(url, newRule, auth);
+
+    if (res.status === 200 && res.data.data) {
+      await SaverRule.updateOne({ emqxRuleId: emqxRuleId }, { status: status });
+      console.log("Saver Rule Status Updated...".green);
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    return false;
   }
-
-
 }
 
-//delte saver rule
-async function deleteSaverRule(dId){
+//delete saver rule
+async function deleteSaverRule(dId) {
   try {
-    
-    const mongoRule= await SaverRule.findOne({dId:dId});
+    const mongoRule = await SaverRule.findOne({ dId: dId });
 
-    const url="http://localhost:8085/api/v4/rules/" + mongoRule.emqxRuleId
+    const url = "http://localhost:8085/api/v4/rules/" + mongoRule.emqxRuleId;
 
-    const emqxRuleId=await axios.delete(url,auth)
+    const emqxRule = await axios.delete(url, auth);
 
-    const deleted=await SaverRule.deleteOne({dId:dId})
+    const deleted = await SaverRule.deleteOne({ dId: dId });
 
-    return true
-
-
+    return true;
   } catch (error) {
-    
-    console.log(error)
-    return false
+    console.log("Error deleting saver rule");
+    console.log(error);
+    return false;
+  }
+}
 
+//delete ALL alarm Rules...
+async function deleteAllAlarmRules(userId, dId) {
+  try {
+    const rules = await AlarmRule.find({ userId: userId, dId: dId });
+
+    if (rules.length > 0) {
+      asyncForEach(rules, async rule => {
+        const url = "http://localhost:8085/api/v4/rules/" + rule.emqxRuleId;
+        const res = await axios.delete(url, auth);
+      });
+
+      await AlarmRule.deleteMany({ userId: userId, dId: dId });
+    }
+
+    return true;
+  } catch (error) {
+    console.log(error);
+    return "error";
+  }
+}
+
+// We can solve this by creating our own asyncForEach() method:
+// thanks to Sebastien Chopin - Nuxt Creator :)
+// https://codeburst.io/javascript-async-await-with-foreach-b6ba62bbf404
+async function asyncForEach(array, callback) {
+  for (let index = 0; index < array.length; index++) {
+    await callback(array[index], index, array);
+  }
+}
+
+//delete ALL emqx device  auth rules
+async function deleteMqttDeviceCredentials(dId) {
+  try {
+    await EmqxAuthRule.deleteMany({ dId: dId, type: "device" });
+
+    return true;
+  } catch (error) {
+    console.log(error);
+    return false;
   }
 }
 
 function makeid(length) {
-  var result = "";
-  var characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  var charactersLength = characters.length;
-  for (var i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+
+  try {
+    var result = "";
+    var characters =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    var charactersLength = characters.length;
+    for (var i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+  } catch (error) {
+    console.log(error);
   }
-  return result;
+
 }
 
-
 module.exports = router;
+
+/*
+userId/dId/temperature -> 
+{
+  value: 21,
+  save: 1
+}
+*/

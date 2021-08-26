@@ -14,6 +14,16 @@ router.delete('/template',checkAuth,async(req,res)=>{
         const userId=req.userData._id;
         const templateId=req.query.templateId;
 
+        if (devices.length > 0){
+
+            const response = {
+                status: "fail",
+                error: "template in use"
+            }
+    
+            return res.json(response);
+        }        
+
         const r= await Template.deleteOne({userId:userId,_id:templateId});
 
         const response={

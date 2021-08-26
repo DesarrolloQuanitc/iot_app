@@ -27,61 +27,62 @@ var client;
 
 //DEVICE CREDENTIALS WEBHOOK
 router.post("/getdevicecredentials", async (req, res) => {
+  try {
 
-  console.log(req.body);
+    const dId = req.body.dId;
 
-  const dId = req.body.dId;
+    const password = req.body.password;
 
-  const password = req.body.password;
+    const device = await Device.findOne({ dId: dId });
 
-  const device = await Device.findOne({ dId: dId });
+    if (password != device.password) {
+      return res.status(401).json();
+    }
 
-  if(password != device.password){
+    const userId = device.userId;
 
-    return res.status(401).json();
+    var credentials = await getDeviceMqttCredentials(dId, userId);
 
+    var template = await Template.findOne({ _id: device.templateId });
+
+
+    var variables = [];
+
+    template.widgets.forEach(widget => {
+      var v = (({
+        variable,
+        variableFullName,
+        variableType,
+        variableSendFreq
+      }) => ({
+        variable,
+        variableFullName,
+        variableType,
+        variableSendFreq
+      }))(widget);
+
+      variables.push(v);
+    });
+
+    const response = {
+      username: credentials.username,
+      password: credentials.password,
+      topic: userId + "/" + dId + "/",
+      variables: variables
+    };
+
+
+    res.json(response);
+
+    setTimeout(() => {
+      getDeviceMqttCredentials(dId, userId);
+      console.log("Device Credentials Updated");
+    }, 10000);
+  } catch (error) {
+    console.log(error);
+    res.sendStatus(500);
   }
-
-  const userId = device.userId;
-
-  var credentials = await getDeviceMqttCredentials(dId, userId);
-
-  var template = await Template.findOne({ _id: device.templateId });
-
-  console.log(template);
-
-  var variables = [];
-
-  template.widgets.forEach(widget => {
-    
-    var v = (({variable, variableFullName, variableType, variableSendFreq }) => ({
-      variable,
-      variableFullName,
-      variableType,
-      variableSendFreq
-    }))(widget);
-
-    variables.push(v);
-  });
-
-  const toSend = {
-    username: credentials.username,
-    password: credentials.password,
-    topic: userId + "/" + dId + "/",
-    variables: variables
-  };
-
-  console.log(toSend);
-
-  res.json(toSend);
-
-  setTimeout(() => {
-    getDeviceMqttCredentials(dId, userId);
-    console.log("Device Credentials Updated");
-  }, 10000);
-  
-});
-
+}); 
 
 //Saver webhook
 router.post("/saver-webhook", async (req, res) => {
@@ -250,6 +251,7 @@ async function getDeviceMqttCredentials(dId, userId) {
     if (rule.length == 0) {
       const newRule = {
         userId: userId,
+        dId:dId,
         username: makeid(10),
         password: makeid(10),
         publish: [userId + "/" + dId + "/+/sdata"],
