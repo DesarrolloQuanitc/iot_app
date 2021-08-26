@@ -8,8 +8,10 @@ var mqtt = require ('mqtt')
 
 import Data from "../models/data.js";
 import Device from "../models/device.js";
-import Notification from "../models/notifications.js"
+import EmqxAuthRule from "../models/emqx_auth.js";
+import Notification from "../models/notifications.js";
 import AlarmRule from "../models/emqx_alarm_rule.js";
+import Template from "../models/template.js";
 
 var client;
 
@@ -374,6 +376,16 @@ async function updateAlarmCounter(emqxRuleId) {
   }
 }
 
+function makeid(length) {
+  var result = "";
+  var characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  var charactersLength = characters.length;
+  for (var i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
 
 setTimeout(()=>{
   startMqttClient();
