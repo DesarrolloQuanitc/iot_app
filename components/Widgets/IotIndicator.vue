@@ -31,10 +31,13 @@ export default {
                 handler() {
                     setTimeout(() => {
                         this.value = false;
+
                         this.$nuxt.$off(this.topic);
+
                         //userId/dId/uniquestr/sdata
                         const topic = this.config.userId + "/" + this.config.selectedDevice.dId + "/" + this.config.variable + "/sdata";
                         this.$nuxt.$on(topic, this.processReceivedData);
+
                     }, 300);
                 }
             }
@@ -47,6 +50,7 @@ export default {
     this.$nuxt.$off(this.topic);
   },
   methods: {
+
     processReceivedData(data){
       try {
         console.log("received");
@@ -61,6 +65,7 @@ export default {
       if (!this.value) {
         return "text-dark";
       }
+
       if (this.config.class == "success") {
         return "text-success";
       }
@@ -74,6 +79,9 @@ export default {
         return "text-danger";
       }
     }
+
   }
 };
+
+
 </script>

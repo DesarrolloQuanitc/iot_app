@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const Schema = mongoose.Schema;
-
+ 
 const emqxAuthRuleSchema = new Schema({
     userId: { type: String, required: [true] },
     dId: { type: String },
@@ -16,4 +16,4 @@ const emqxAuthRuleSchema = new Schema({
 
 const EmqxAuthRule = mongoose.model('EmqxAuthRule', emqxAuthRuleSchema);
 
-export default EmqxAuthRule;   
+export default EmqxAuthRule;     

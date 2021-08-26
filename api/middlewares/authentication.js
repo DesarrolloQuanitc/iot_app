@@ -1,23 +1,24 @@
 const jwt = require('jsonwebtoken');
 
-let checkAuth=(req,res,next)=>{
+let checkAuth = (req, res, next) => {
 
-    let token= req.get('token')
-    jwt.verify(token,"securePasswordHere",(err,decoded)=>{
-        if(err){
+    let token = req.get('token');
+
+    jwt.verify(token, "securePasswordHere", (err, decoded) => {
+
+        if (err){
             return res.status(401).json({
-                status:"error",
-                error:err
-                
-            })
+              status: "error",
+              error: err  
+            });
         }
 
-        req.userData=decoded.userData;
+        req.userData = decoded.userData;
 
         next();
 
-    })
+    });
 
 }
 
-module.exports={checkAuth}
+module.exports = {checkAuth}

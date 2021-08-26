@@ -64,7 +64,7 @@
 </template>
 <script>
 export default {
-  middleware:"notAuthenticated",
+  middleware: 'notAuthenticated',
   layout: "auth",
   data() {
     return {
@@ -76,52 +76,55 @@ export default {
     };
   },
   methods: {
-    register(){
-      this.$axios.post("/register",this.user)
-      .then((res)=> {
-        
-        //succes - Usuario creado
-        if(res.data.status == "succes"){
+    register() {
 
-          this.$notify({
-            type:"success",
-            icon:"tim-icons icon-check-2",
-            message:"Succes ! Now you can login ..."
-          })
+      this.$axios
+        .post("/register", this.user)
+        .then(res => {
+          //success! - Usuario creado.
+          if (res.data.status == "success") {
+            this.$notify({
+              type: "success",
+              icon: "tim-icons icon-check-2",
+              message: "Success! Now you can login..."
+            });
 
-          this.user.name="";
-          this.user.password="";
-          this.user.email="";
+            this.user.name = "";
+            this.user.password = "";
+            this.user.email = "";
 
-          return;
+            return;
+          }
 
-        }
+        })
+        .catch(e => {
+          console.log(e.response.data);
 
-
-      })
-      .catch((e)=>{
-        console.log(e.response.data);
-
-        if (e.response.data.error.errors.email.kind == "unique") {
+          if (e.response.data.error.errors.email.kind == "unique") {
             this.$notify({
               type: "danger",
               icon: "tim-icons icon-alert-circle-exc",
               message: "User already exists :("
             });
 
-          return;
-        }else{
-          
-          this.$notify({
+            return;
+
+          } else {
+
+            this.$notify({
               type: "danger",
               icon: "tim-icons icon-alert-circle-exc",
               message: "Error creating user..."
             });
 
-          return;
-        }
+            return;
+          }
 
-      })
+
+
+        });
+
+
     }
   }
 };

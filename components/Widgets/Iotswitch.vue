@@ -36,19 +36,27 @@
                 immediate: true,
                 deep: true,
                 handler() {
+
                 }
             }
         },
+
         mounted() {
+
+
+
         },
         beforeDestroy() {
+
         },
         methods: {
+
             getIconColorClass() {
                 //para apagar el icono 
                 if (!this.value){
                     return "text-dark";
                 }
+
                 if (this.config.class == "success") {
                     return "text-success";
                 }
@@ -62,16 +70,22 @@
                     return "text-danger";
                 }
             },
+
+
             sendValue(){
+
                 const toSend = {
                     topic: this.config.userId + '/' + this.config.selectedDevice.dId + '/' + this.config.variable + '/actdata',
                     msg: {
                         value: this.value
                     }
                 };
-                console.log(toSend);
-                this.$nuxt.$emit('mqtt-sender', toSend);
+
+                $nuxt.$emit('mqtt-sender', toSend);
+
             }
+
+
         }
     };
 </script>
