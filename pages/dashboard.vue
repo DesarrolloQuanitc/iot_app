@@ -11,11 +11,6 @@
       
     >
 
-<<<<<<< HEAD
-=======
-    <Json :value="fixWidget(widget)"></Json>
-
->>>>>>> parent of 4490bcb... Quite JSON EN DASHBOARD
       <Rtnumberchart
         v-if="widget.widget == 'numberchart'"
         :config="fixWidget(widget)"
