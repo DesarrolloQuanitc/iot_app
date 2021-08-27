@@ -202,7 +202,7 @@ export default {
         this.$store.state.auth.userData._id + "/+/+/notif";
 
       const connectUrl =
-        "ws://" +
+        process.env.mqtt_prefix +
         this.options.host +
         ":" +
         this.options.port +
@@ -219,6 +219,7 @@ export default {
         console.log(this.client);
 
         console.log("Connection succeeded!");
+        console.log(process.env.mqtt_prefix);
 
         //SDATA SUBSCRIBE
         this.client.subscribe(deviceSubscribeTopic, { qos: 0 }, err => {
