@@ -3,7 +3,7 @@ const router = express.Router();
 const axios = require("axios");
 const colors = require("colors");
 
-//Faltaba agregar 
+//Faltaba agregar , nose porque no se guarda
 import EmqxAuthRule from "../models/emqx_auth.js";
 
 const auth = {
